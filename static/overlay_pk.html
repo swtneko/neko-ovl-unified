@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Overlay - Multi PK (MCA Standard)</title>
+
+<style>
+  @font-face{font-family:'SF Pro Text';font-style:normal;font-weight:400;font-display:swap;src:url(//static.mcastar.net/live_assistant/fonts/sf-pro-text_regular.woff2) format("woff2")}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: transparent !important;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'SF Pro Text', 'PingFangSC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  }
+
+  :root {
+    --radius-s: 4px;
+    --radius-m: 8px;
+    --radius-l: 12px;
+    --color-white: #fff;
+    --color-black: #000;
+    --font-size-4: 18px;
+    --font-size-6: 22px;
+
+    --multipk-color-1: rgba(255, 86, 176, 1);
+    --multipk-color-2: rgba(3, 190, 242, 1);
+    --multipk-color-3: rgba(255, 172, 62, 1);
+    --multipk-color-4: rgba(150, 75, 250, 1);
+    --multipk-color-5: rgba(255, 53, 66, 1);
+    --multipk-color-1-rgb: 255, 86, 176;
+    --multipk-color-2-rgb: 3, 190, 242;
+    --multipk-color-3-rgb: 255, 172, 62;
+    --multipk-color-4-rgb: 150, 75, 250;
+    --multipk-color-5-rgb: 255, 53, 66;
+
+    /* ẢNH: muốn dùng ảnh trong máy thì đổi các dòng này thành url(images/xxx.png)
+       (nhớ đổi cả IMG_BASE trong phần JS cho ảnh đếm ngược) */
+    --img-effect:   url(/static/images/widget_animate_multipk.png);
+    --img-fog-all:  url(/static/images/widget_atkdef_fog_all.webp);
+    --img-fog-left: url(/static/images/widget_atkdef_fog_fast_left.png);
+    --img-fog-right:url(/static/images/widget_atkdef_fog_fast_right.png);
+    --img-crown:    url(/static/images/icon_crown.png);
+  }
+
+  #app { display: flex; justify-content: center; align-items: center; }
+  .widget-multipk-container { position: relative; width: 360px; }
+
+  /* === 1. HÀNG AVATAR + TÊN === */
+  .widget-multipk-anchor-info {
+    position: relative;
+    display: flex;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .widget-multipk-anchor-info .anchor-column {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 6px;
+    height: 20px;
+    transition: width .9s cubic-bezier(.22, 1, .36, 1);
+    will-change: width;
+  }
+  .widget-multipk-anchor-info .anchor-column .avatar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    z-index: 2;
+  }
+  .widget-multipk-anchor-info .anchor-column .avatar-container .avatar {
+    width: 18px;
+    height: 18px;
+    border: .9px solid rgba(0,0,0,.4);
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    background: #444;
+  }
+  .widget-multipk-anchor-info .anchor-column .avatar-container .position-1-avatar { border-color: var(--multipk-color-1); }
+  .widget-multipk-anchor-info .anchor-column .avatar-container .position-2-avatar { border-color: var(--multipk-color-2); }
+  .widget-multipk-anchor-info .anchor-column .avatar-container .position-3-avatar { border-color: var(--multipk-color-3); }
+  .widget-multipk-anchor-info .anchor-column .avatar-container .position-4-avatar { border-color: var(--multipk-color-4); }
+  .widget-multipk-anchor-info .anchor-column .avatar-container .position-5-avatar { border-color: var(--multipk-color-5); }
+
+  .widget-multipk-anchor-info .anchor-column .nickname-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 14px;
+    border-radius: 6px;
+    min-width: 0;
+  }
+  .widget-multipk-anchor-info .anchor-column .nickname-container.avatar-display { margin-left: -8px; }
+  .widget-multipk-anchor-info .anchor-column .nickname-container .nickname {
+    display: block;
+    color: #fff;
+    font-weight: 600;
+    font-size: 8px;
+    line-height: 14px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    padding: 0 4px 0 8px;           /* chừa chỗ cho phần avatar chồng lên */
+  }
+  .widget-multipk-anchor-info .anchor-column .nickname-container.position-1-nickname { background: var(--multipk-color-1); }
+  .widget-multipk-anchor-info .anchor-column .nickname-container.position-2-nickname { background: var(--multipk-color-2); }
+  .widget-multipk-anchor-info .anchor-column .nickname-container.position-3-nickname { background: var(--multipk-color-3); }
+  .widget-multipk-anchor-info .anchor-column .nickname-container.position-4-nickname { background: var(--multipk-color-4); }
+  .widget-multipk-anchor-info .anchor-column .nickname-container.position-5-nickname { background: var(--multipk-color-5); }
+
+  /* Người dẫn đầu: vương miện trên tên (CSS gốc của widget) */
+  .widget-multipk-anchor-info .anchor-column.is-leading { position: relative; z-index: 1; }
+  .widget-multipk-anchor-info .anchor-column.is-leading .nickname-container { position: relative; }
+  .widget-multipk-anchor-info .anchor-column.is-leading .nickname-container:after {
+    content: "";
+    position: absolute;
+    right: -8px;
+    top: -9px;
+    width: 18px;
+    height: 18px;
+    background-image: var(--img-crown);
+    background-repeat: no-repeat;
+    background-size: contain;
+    transform: rotate(45deg);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* === 2. THANH BAR === */
+  .widget-multipk-bar {
+    position: relative;
+    width: 100%;
+    height: 16px;
+    border-radius: var(--radius-m);
+    overflow: visible;                 /* để hiệu ứng sáng của người dẫn đầu tràn ra ngoài */
+    background: rgba(0,0,0,.3);
+    z-index: 1;
+  }
+  .widget-multipk-bar .bar-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .widget-multipk-bar .position-part {
+    position: relative;
+    height: 100%;
+    overflow: visible;
+    transition: width .9s cubic-bezier(.22, 1, .36, 1), height .3s ease-out, transform .3s ease-out;
+    will-change: width;
+  }
+  .widget-multipk-bar .position-part .score {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 4px;
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-6);     /* 22px × scale(.5) = 11px, giống widget gốc */
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-white);
+    text-shadow: 0 2px 2px rgba(0,0,0,.45);
+    font-variant-numeric: tabular-nums;
+    transform: scale(.5);
+    transform-origin: left center;
+    white-space: nowrap;
+  }
+  .widget-multipk-bar .position-part.position-1 { background-image: linear-gradient(90deg, var(--multipk-color-1), rgba(var(--multipk-color-1-rgb), .9)); }
+  .widget-multipk-bar .position-part.position-2 { background-image: linear-gradient(90deg, var(--multipk-color-2), rgba(var(--multipk-color-2-rgb), .9)); }
+  .widget-multipk-bar .position-part.position-3 { background-image: linear-gradient(90deg, var(--multipk-color-3), rgba(var(--multipk-color-3-rgb), .9)); }
+  .widget-multipk-bar .position-part.position-4 { background-image: linear-gradient(90deg, var(--multipk-color-4), rgba(var(--multipk-color-4-rgb), .9)); }
+  .widget-multipk-bar .position-part.position-5 { background-image: linear-gradient(90deg, var(--multipk-color-5), rgba(var(--multipk-color-5-rgb), .9)); }
+  .widget-multipk-bar .position-part:first-child { border-top-left-radius: var(--radius-m); border-bottom-left-radius: var(--radius-m); }
+  .widget-multipk-bar .position-part:last-child  { border-top-right-radius: var(--radius-m); border-bottom-right-radius: var(--radius-m); }
+
+  /* Người dẫn đầu: cao hơn 1px + viền sáng vàng "thở" (CSS gốc của widget) */
+  .widget-multipk-bar .position-part.is-leading { height: 17px; transform: translateY(-.5px); z-index: 12; }
+  .widget-multipk-bar .position-part.is-leading .score { transform: scale(.53125); z-index: 1; }
+  .widget-multipk-bar .position-part.is-leading:before {
+    content: "";
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+    border-radius: 1px;
+    box-shadow: 0 0 0 .5px #fffdec, 0 0 0 1.25px #fffbd6, 0 0 3px 1px rgba(255,252,226,.9), 0 0 8px 3px rgba(255,236,152,.65), inset 0 0 7px 2px rgba(255,242,182,.45);
+    pointer-events: none;
+    z-index: 11;
+  }
+  .widget-multipk-bar .position-part.is-leading:after {
+    content: "";
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+    border-radius: 1px;
+    box-shadow: 0 0 0 2px #fffdea, 0 0 3px 1px #fffbda, 0 0 6px 2px rgba(255,241,174,.9);
+    animation: widgetMultipkGoldBreath .6s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 12;
+  }
+  .widget-multipk-bar .position-part.is-leading:first-child:before,
+  .widget-multipk-bar .position-part.is-leading:first-child:after { border-top-left-radius: var(--radius-m); border-bottom-left-radius: var(--radius-m); }
+  .widget-multipk-bar .position-part.is-leading:last-child:before,
+  .widget-multipk-bar .position-part.is-leading:last-child:after  { border-top-right-radius: var(--radius-m); border-bottom-right-radius: var(--radius-m); }
+  @keyframes widgetMultipkGoldBreath { 0% { opacity: 0; } 100% { opacity: .55; } }
+
+  .widget-multipk-bar-separator {
+    height: 16px;
+    width: 0;
+    flex-shrink: 0;
+    background: #fff;
+    border-right: 2px solid #fff;
+    box-shadow: 0 0 2px .5px rgba(255,255,255,.2);
+    pointer-events: none;
+    z-index: 11;
+  }
+
+  /* Vệt sáng chạy ở người dẫn đầu */
+  .widget-multipk-bar-effect {
+    display: none;
+    position: absolute;
+    top: 50%;
+    right: -23px;
+    width: 90px;
+    height: 16px;
+    background-image: var(--img-effect);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transform: translateY(-50%);
+    opacity: 1;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .widget-multipk-bar-effect.last-position { right: auto; left: -23px; transform: translateY(-50%) scaleX(-1); }
+  .position-part.is-leading .widget-multipk-bar-effect { display: block; }
+
+  /* === FOG (sương mù ẩn điểm) === */
+  .widget-multipk-bar.has-fog .widget-multipk-bar-effect { display: none; }
+  .widget-multipk-bar.has-fog .position-part.is-leading { height: 100%; transform: none; }
+  .widget-multipk-bar.has-fog .position-part.is-leading .score { transform: scale(.5); }
+  .widget-multipk-bar.has-fog .position-part.is-leading:before,
+  .widget-multipk-bar.has-fog .position-part.is-leading:after { display: none; }
+
+  .widget-multipk-bar-fog {
+    position: absolute;
+    top: 0; left: 0;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .widget-multipk-bar-fog .widget-multipk-bar-fog-item {
+    flex: 0 0 50%;
+    height: 100%;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+  .widget-multipk-bar-fog .widget-multipk-bar-fog-item-left  { background-image: var(--img-fog-left);  margin-right: auto; }
+  .widget-multipk-bar-fog .widget-multipk-bar-fog-item-right { background-image: var(--img-fog-right); margin-left: auto; }
+  .widget-multipk-bar-fog.is-play .widget-multipk-bar-fog-item { opacity: 1; }
+
+  .widget-multipk-bar-fog-all {
+    position: absolute;
+    top: 0; left: -1%;
+    width: 101%;
+    height: 100%;
+    background-image: var(--img-fog-all);
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .2s linear, visibility 0s linear .2s;
+    z-index: 3;
+  }
+  .widget-multipk-bar-fog-all.is-show {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .2s ease-in, visibility 0s linear;
+  }
+  .bar-container.fog-hide-score .score { visibility: hidden; }
+
+  /* === 3. HÀNG TOP GIFTERS === */
+  .widget-multipk-gift-info {
+    position: relative;
+    margin-top: 4px;
+    display: flex;
+    width: 100%;
+  }
+  .widget-multipk-gift-info .gifts-column {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    transition: width .9s cubic-bezier(.22, 1, .36, 1);
+    will-change: width;
+  }
+  .widget-multipk-gift-info .gift-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 51px;
+    height: 19px;
+    gap: 2px;
+  }
+  .widget-multipk-gift-info .gift-container .gift-icons-wrapper {
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(0,0,0,.4) 27.59%, rgba(102,102,102,.25) 105.36%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5px;
+    padding: 1px;
+  }
+  .widget-multipk-gift-info .gift-container .gift-icons-wrapper:empty { display: none; }
+  .widget-multipk-gift-info .gift-container .gift-icons-wrapper .gift-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+  .widget-multipk-gift-info .gift-container .user-avatars { display: flex; align-items: center; }
+  .widget-multipk-gift-info .gift-container .user-avatars img {
+    width: 18px;
+    height: 18px;
+    border-radius: 50% !important;
+    border: .5px solid #f6d346;
+    box-sizing: border-box;
+    background: #d9d9d9;
+    object-fit: cover;
+    display: inline-block;
+  }
+  .widget-multipk-gift-info .gift-container .user-avatars img:not(:first-child) { margin-left: -8px; }
+
+  /* === 4. ĐỒNG HỒ + VÒNG === */
+  .widget-multipk-bottom {
+    position: relative;
+    margin-top: 11px;
+    width: 100%;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .widget-multipk-bottom-count {
+    min-width: 70px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 13px;
+    background: rgba(0,0,0,.35);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+  }
+  /* Số đếm ngược 10 → 0 dạng ảnh (như widget gốc) */
+  .widget-multipk-bottom-count .countdown-zero { display: block; }
+  .widget-multipk-bottom-count .countdown-zero img { display: block; height: 28px; width: 38px; object-fit: contain; }
+  .widget-multipk-bottom-count .countdown-zero.countdown-animation img { animation: countdown-scale 1s ease-out; }
+  .widget-multipk-bottom-count .countdown-text { display: block; color: #ff6b6b; animation: countdown-scale 1s ease-out; }
+  @keyframes countdown-scale {
+    0%   { opacity: .5; transform: scale(.9); }
+    50%  { opacity: .8; transform: scale(1.1); }
+    100% { opacity: 1;  transform: scale(1); }
+  }
+
+  /* Viên "Round N" ↔ "N người" bên trái đồng hồ */
+  .widget-multipk-bottom-round {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 61px;
+    height: 19px;
+    border-radius: 22px;
+    background: rgba(0,0,0,.2);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 100%;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0,0,0,.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="widget" style="transform: scale(2.3);">
+    <div class="widget-multipk-container">
+
+      <!-- 1. Hàng Avatar + Tên -->
+      <div class="widget-multipk-anchor-info" id="anchor-row"></div>
+
+      <!-- 2. Thanh Bar + Hiệu ứng ánh sáng + Fog -->
+      <div class="widget-multipk-bar" id="pk-bar">
+        <div class="bar-container" id="pk-bar-container"></div>
+        <div class="widget-multipk-bar-fog" id="fog-fast">
+          <span class="widget-multipk-bar-fog-item widget-multipk-bar-fog-item-left"></span>
+          <span class="widget-multipk-bar-fog-item widget-multipk-bar-fog-item-right"></span>
+        </div>
+        <div class="widget-multipk-bar-fog-all" id="fog-all"></div>
+      </div>
+
+      <!-- 3. Hàng Top Gifters -->
+      <div class="widget-multipk-gift-info" id="gift-row"></div>
+
+      <!-- 4. Đồng hồ + vòng -->
+      <div class="widget-multipk-bottom">
+        <div class="widget-multipk-bottom-round" id="pk-round" style="display:none;"></div>
+        <div class="widget-multipk-bottom-count" id="pk-timer-box"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ================== CẤU HÌNH ================== */
+const CFG = {
+  LANG: "vi",                 // "vi" | "en" — ngôn ngữ chữ trên overlay (giống MCA)
+  BAR_PX: 360,                // chiều rộng thanh
+  SEP_PX: 2,                  // độ rộng vạch trắng ngăn giữa các người
+  MIN_PX_BY_COUNT: { 1: 360, 2: 80, 3: 65, 4: 52, 5: 42 }, // bề rộng tối thiểu mỗi người
+  NUM_TWEEN_MS: 900,          // thời gian số điểm chạy lên
+  FOG_FAST_MS: 700,           // sương mù "quét nhanh" trước khi phủ kín
+  ROUND_FLIP_MS: 1500,        // đổi qua lại "Round N" ↔ "N người"
+  COUNTDOWN_FROM: 10,         // từ giây này trở xuống dùng ảnh số đếm ngược
+  IMG_BASE: "/static/images/",   // Dùng ảnh local tải từ MCAClone
+};
+
+const I18N = {
+  vi: { no1: "Hạng 1", people: n => `${n} người`, round: n => `Round ${n}`, ready: "Chuẩn bị", settling: "Thống kê", end: "kết thúc" },
+  en: { no1: "No.1",   people: n => `${n} People`, round: n => `Round ${n}`, ready: "Stand by", settling: "Confirming", end: "Finish" },
+};
+const T = I18N[CFG.LANG] || I18N.vi;
+
+/* ================== TIỆN ÍCH ================== */
+let state = null;
+const $ = id => document.getElementById(id);
+function el(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
+
+function fmtTime(sec) {
+  sec = Math.max(0, sec | 0);
+  const m = String(Math.floor(sec / 60)).padStart(2, "0");
+  const s = String(sec % 60).padStart(2, "0");
+  return `${m} : ${s}`;
+}
+
+// Avatar mặc định (chữ cái đầu) — cache để không vẽ lại canvas mỗi lần nhận state
+const avatarCache = new Map();
+function fallbackAvatar(name) {
+  const initial = (name || "?").trim().slice(0, 2).toUpperCase() || "?";
+  if (!avatarCache.has(initial)) {
+    const c = document.createElement("canvas");
+    c.width = 40; c.height = 40;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#3a3a46"; ctx.fillRect(0, 0, 40, 40);
+    ctx.fillStyle = "#ffffff"; ctx.font = "bold 18px sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(initial, 20, 20);
+    avatarCache.set(initial, c.toDataURL());
+  }
+  return avatarCache.get(initial);
+}
+function formatAvatarUrl(raw) {
+  if (!raw) return "";
+  let av = String(raw).trim();
+  if ((av.includes("tiktokcdn.com") || av.includes("byteoversea.com")) && !av.startsWith("/api/avatar/proxy")) {
+    return `/api/avatar/proxy?url=${encodeURIComponent(av)}`;
+  }
+  return av;
+}
+const avatarUrl = p => formatAvatarUrl(p.avatar) || fallbackAvatar(p.name);
+
+function setImg(img, src, fallback) {
+  if (img.dataset.src === src) return;
+  img.dataset.src = src;
+  img.onerror = fallback ? () => { img.onerror = null; img.src = fallback(); } : null;
+  img.src = src;
+}
+
+// Preload ảnh số đếm ngược
+for (let i = 0; i <= CFG.COUNTDOWN_FROM; i++) new Image().src = `${CFG.IMG_BASE}widget_count_${i}.png`;
+
+/* ================== BỐ CỤC THANH ================== */
+// Mỗi người có bề rộng tối thiểu, phần còn lại chia theo điểm (đúng như MCA) → không ai bị ép về 0px.
+function calcWidths(scores) {
+  const n = scores.length;
+  const usable = CFG.BAR_PX - (n - 1) * CFG.SEP_PX;
+  const total = scores.reduce((s, v) => s + Math.max(0, v), 0);
+  const minPx = CFG.MIN_PX_BY_COUNT[n] || Math.max(34, Math.floor(usable / n * 0.18));
+  const base = Math.min(minPx, Math.floor(usable / n));
+  const extra = Math.max(0, usable - base * n);
+  return scores.map(v => total > 0 ? base + extra * Math.max(0, v) / total : usable / n);
+}
+
+/* ================== DỰNG DOM (chỉ khi đổi số người) ================== */
+const dom = { n: 0, cols: [], avatars: [], names: [], parts: [], scores: [], gcols: [], gicons: [], gusers: [] };
+
+function build(n) {
+  const anchorRow = $("anchor-row"), barCont = $("pk-bar-container"), giftRow = $("gift-row");
+  anchorRow.textContent = ""; barCont.textContent = ""; giftRow.textContent = "";
+  Object.assign(dom, { n, cols: [], avatars: [], names: [], parts: [], scores: [], gcols: [], gicons: [], gusers: [] });
+
+  for (let i = 0; i < n; i++) {
+    const k = i + 1;
+
+    // 1. Avatar + tên
+    const col = el("div", "anchor-column");
+    const avWrap = el("div", "avatar-container");
+    const av = el("img", `avatar position-${k}-avatar`);
+    avWrap.appendChild(av);
+    const nickBox = el("div", `nickname-container avatar-display position-${k}-nickname`);
+    const nick = el("span", "nickname");
+    nickBox.appendChild(nick);
+    col.append(avWrap, nickBox);
+    anchorRow.appendChild(col);
+
+    // 2. Thanh
+    const part = el("div", `position-part position-${k}`);
+    const score = el("span", `score position-${k}-score score-left-aligned`);
+    const effect = el("div", "widget-multipk-bar-effect" + (i === n - 1 ? " last-position" : ""));
+    part.append(score, effect);
+    barCont.appendChild(part);
+    if (i < n - 1) barCont.appendChild(el("div", "widget-multipk-bar-separator"));
+
+    // 3. Quà + top fan
+    const gcol = el("div", "gifts-column");
+    const gc = el("div", "gift-container");
+    const icons = el("div", "gift-icons-wrapper");
+    const users = el("div", "user-avatars");
+    gc.append(icons, users);
+    gcol.appendChild(gc);
+    giftRow.appendChild(gcol);
+
+    dom.cols.push(col); dom.avatars.push(av); dom.names.push(nick);
+    dom.parts.push(part); dom.scores.push(score);
+    dom.gcols.push(gcol); dom.gicons.push(icons); dom.gusers.push(users);
+  }
+  numState.length = 0; // reset hiệu ứng chạy số
+}
+
+/* ================== SỐ ĐIỂM CHẠY LÊN MƯỢT ================== */
+const numState = [];           // [{shown, from, to, start}]
+let leadIdx = -1;
+let tweenRaf = 0;
+const ease = t => 1 - Math.pow(1 - t, 4);   // easeOutQuart
+
+function trackScore(i, target, now) {
+  const s = numState[i];
+  if (!s) { numState[i] = { shown: target, from: target, to: target, start: now }; return; }
+  if (target === s.to) return;
+  if (target < s.shown) { numState[i] = { shown: target, from: target, to: target, start: now }; return; } // giảm/reset → nhảy thẳng
+  s.from = s.shown; s.to = target; s.start = now;
+}
+
+function paintScores() {
+  for (let i = 0; i < dom.n; i++) {
+    const s = numState[i];
+    if (!s) continue;
+    const txt = s.shown.toLocaleString();
+    const out = i === leadIdx ? `${T.no1}(${txt})` : txt;
+    if (dom.scores[i].textContent !== out) dom.scores[i].textContent = out;
+  }
+}
+
+function tweenStep(now) {
+  let active = false;
+  for (const s of numState) {
+    if (!s || s.shown === s.to) continue;
+    const t = Math.min(1, (now - s.start) / CFG.NUM_TWEEN_MS);
+    s.shown = t >= 1 ? s.to : Math.round(s.from + (s.to - s.from) * ease(t));
+    if (s.shown !== s.to) active = true;
+  }
+  paintScores();
+  tweenRaf = active ? requestAnimationFrame(tweenStep) : 0;
+}
+
+/* ================== FOG ================== */
+let fogOn = false, fogTimer = 0;
+function applyFog(show) {
+  const bar = $("pk-bar"), fast = $("fog-fast"), all = $("fog-all"), cont = $("pk-bar-container");
+  cont.classList.toggle("fog-hide-score", show);
+  if (show === fogOn) return;
+  clearTimeout(fogTimer);
+  if (show) {
+    bar.classList.add("has-fog");
+    fast.classList.add("is-play");                 // quét nhanh hai bên
+    fogTimer = setTimeout(() => {                  // rồi phủ kín
+      fast.classList.remove("is-play");
+      all.classList.add("is-show");
+    }, CFG.FOG_FAST_MS);
+  } else {
+    fast.classList.remove("is-play");
+    all.classList.remove("is-show");
+    bar.classList.remove("has-fog");
+  }
+  fogOn = show;
+}
+
+/* ================== ĐỒNG HỒ ================== */
+let timeKey = "";
+function setTime(kind, text) {
+  const key = kind + ":" + text;
+  if (key === timeKey) return;                     // chỉ dựng lại khi nội dung đổi (để animation chạy lại mỗi giây)
+  timeKey = key;
+  const box = $("pk-timer-box");
+  box.textContent = "";
+  if (kind === "count") {
+    const wrap = el("span", "countdown-zero countdown-animation");
+    const img = new Image();
+    img.alt = text;
+    img.onerror = () => { wrap.className = "countdown-text"; wrap.textContent = text; };   // ảnh lỗi → hiện chữ đỏ
+    img.src = `${CFG.IMG_BASE}widget_count_${text}.png`;
+    wrap.appendChild(img);
+    box.appendChild(wrap);
+  } else {
+    box.append(text);
+  }
+}
+
+/* ================== VIÊN "ROUND N" ↔ "N NGƯỜI" ================== */
+let roundFlip = false;
+function paintRound() {
+  const pill = $("pk-round");
+  const pk = (state && state.pk) || {};
+  const round = Number(pk.round) || 0;
+  const people = Number(pk.user_num) || 0;        // chỉ hiện khi server có gửi user_num
+  let txt = "";
+  if (round > 0 && people > 0) txt = roundFlip ? T.people(people) : T.round(round);
+  else if (round > 0) txt = T.round(round);
+  else if (people > 0) txt = T.people(people);
+  pill.style.display = txt ? "" : "none";
+  if (pill.textContent !== txt) pill.textContent = txt;
+}
+setInterval(() => { roundFlip = !roundFlip; paintRound(); }, CFG.ROUND_FLIP_MS);
+
+/* ================== RENDER ================== */
+function giftIcons(p) {
+  if (Array.isArray(p.gifts) && p.gifts.length) {
+    return p.gifts.map(g => (typeof g === "string" ? g : g && g.gift_icon)).filter(Boolean);
+  }
+  return p.gift_img ? [p.gift_img] : [];
+}
+
+function syncImgList(box, list, cls) {
+  const key = list.join("|");
+  if (box.dataset.k === key) return;
+  box.dataset.k = key;
+  box.textContent = "";
+  list.forEach((src, idx) => {
+    const img = el("img", typeof cls === "function" ? cls(idx) : cls);
+    img.alt = "";
+    img.src = src;
+    box.appendChild(img);
+  });
+}
+
+function render() {
+  if (!state) return;
+  const pk    = state.pk    || { num_positions: 3, round: 1, status: "standby", positions: [] };
+  const timer = state.timer || { duration: 120, remaining: 120, running: false, finished: false };
+
+  const n = Math.min(5, Math.max(1, pk.num_positions || 3));
+  const positions = [];
+  for (let i = 0; i < n; i++) {
+    const p = (pk.positions && pk.positions[i]) || {};
+    positions.push({
+      name:      p.name || `Vị trí ${i + 1}`,
+      avatar:    p.avatar || "",
+      score:     Math.max(0, Number(p.score) || 0),
+      gift_img:  p.gift_img || "",
+      gifts:     p.gifts,
+      top_users: p.top_users,
+    });
+  }
+  if (dom.n !== n) build(n);
+
+  // Người dẫn đầu: chỉ khi có đúng 1 người cao điểm nhất (hòa → không ai dẫn đầu, như MCA)
+  const maxScore = Math.max(...positions.map(p => p.score), 0);
+  const leaders = positions.filter(p => p.score === maxScore && maxScore > 0);
+  leadIdx = leaders.length === 1 ? positions.indexOf(leaders[0]) : -1;
+
+  // Bề rộng — cột avatar/quà cộng thêm vạch ngăn để thẳng hàng tuyệt đối với thanh
+  const px = calcWidths(positions.map(p => p.score));
+  positions.forEach((p, i) => {
+    const partW = (px[i] / CFG.BAR_PX * 100) + "%";
+    const colW  = ((px[i] + (i < n - 1 ? CFG.SEP_PX : 0)) / CFG.BAR_PX * 100) + "%";
+    dom.parts[i].style.width = partW;
+    dom.cols[i].style.width = colW;
+    dom.gcols[i].style.width = colW;
+
+    dom.parts[i].classList.toggle("is-leading", i === leadIdx);
+    dom.cols[i].classList.toggle("is-leading", i === leadIdx);
+
+    setImg(dom.avatars[i], avatarUrl(p), () => fallbackAvatar(p.name));
+    if (dom.names[i].textContent !== p.name) dom.names[i].textContent = p.name;
+
+    syncImgList(dom.gicons[i], giftIcons(p), idx => `gift-icon gift-${idx}`);
+    const users = (n < 4 && Array.isArray(p.top_users)) ? p.top_users.filter(Boolean).slice(0, 3) : [];
+    syncImgList(dom.gusers[i], users, "");
+  });
+
+  // Số điểm
+  const now = performance.now();
+  positions.forEach((p, i) => trackScore(i, p.score, now));
+  paintScores();
+  if (!tweenRaf && numState.some(s => s && s.shown !== s.to)) tweenRaf = requestAnimationFrame(tweenStep);
+
+  // Đồng hồ
+  const finished = !!(timer.finished || pk.status === "finished");
+  const standby  = !timer.running && timer.remaining === timer.duration;
+  const rem = timer.remaining | 0;
+  if (finished)                         setTime("text", T.end);
+  else if (pk.status === "settling")    setTime("text", T.settling);
+  else if (standby)                     setTime("text", T.ready);
+  else if (rem >= 0 && rem <= CFG.COUNTDOWN_FROM) setTime("count", String(rem));
+  else                                  setTime("text", fmtTime(timer.remaining));
+
+  // Fog
+  const inLock = !!pk.in_score_lock;
+  applyFog(!!pk.fog_active && !inLock && !finished);
+
+  paintRound();
+}
+
+/* ================== KẾT NỐI ================== */
+function connect() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onmessage = ev => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === "state") { state = msg.data; render(); }
+    } catch (e) { console.error(e); }
+  };
+  ws.onclose = () => setTimeout(connect, 1500);
+}
+
+connect();
+</script>
+</body>
+</html>

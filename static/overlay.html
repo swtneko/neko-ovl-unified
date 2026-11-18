@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Neko Smart Overlay - Tự động chuyển FreeMode & MultiPK</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    background: transparent !important;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  iframe {
+    border: none;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+  }
+</style>
+</head>
+<body>
+<iframe id="overlayFrame" src="/overlay/popup"></iframe>
+<script>
+  let currentLoaded = "freemode";
+  const frame = document.getElementById("overlayFrame");
+  function connect() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${proto}//${location.host}/ws`);
+    ws.onmessage = ev => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "state" && msg.data) {
+          const mode = msg.data.mode || "freemode";
+          if (mode !== currentLoaded) {
+            currentLoaded = mode;
+            frame.src = (mode === "multipk") ? "/overlay/pk" : "/overlay/popup";
+          }
+        }
+      } catch (e) {}
+    };
+    ws.onclose = () => setTimeout(connect, 1500);
+  }
+  connect();
+</script>
+</body>
+</html>
